@@ -2,9 +2,56 @@
 
 const express = require('express')
 const Joi = require('joi')
+const helmet = require("helmet")
+const morgan = require('morgan')
+const config = require('config')
+const appDebugger= require('debug')("app:startup")
+const dbDebugger = require('debug')("app:db")
+
+const middleware = require('./middleware')
+
 const app = express()
 
 app.use(express.json())
+app.use(helmet())
+
+
+console.log(`Name : ${config.get("name")} Pass: ${config.get("password")}`)
+
+// Environment Variables
+// process.env.NODE_ENV always return undefined if not set
+// app.get("env") return development if not set
+
+// how to set env Variables ?
+// mac => export NODE_ENV = "development" || "production"
+// windows => set NODE_ENV = "development" || "production"
+
+// Debugger using envs
+// export DEBUG=app:*   => for all namespaces
+// export DEBUG=app:startup || export DEBUG=app:db
+
+// Shortcut DEBUG=app:startup nodemon express.js 
+dbDebugger("Testing DB ......")
+
+if(app.get("env") == "development"){
+
+    // Morgan impacts request processing pipeline so only use it in development
+    app.use(morgan("tiny"))
+
+    appDebugger("Runnind code in development mode")
+}
+
+
+
+// Middleware for accessing static files from public folder
+// ex localhost:3000/static.png
+
+app.use(express.static("public"))
+
+
+// Creating Custom Middleware
+app.use(middleware)
+
 
 const port = process.env.PORT || 3000
 
